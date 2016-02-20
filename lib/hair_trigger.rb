@@ -2,6 +2,7 @@ require 'ostruct'
 require 'active_record'
 require 'hair_trigger/base'
 require 'hair_trigger/migrator'
+require 'hair_trigger/migration/statements'
 require 'hair_trigger/adapter'
 require 'hair_trigger/schema_dumper'
 require 'hair_trigger/railtie' if defined?(Rails::Railtie)
@@ -13,6 +14,20 @@ module HairTrigger
 
   class << self
     attr_writer :model_path, :schema_rb_path, :migration_path
+
+    def load
+      ActiveRecord::Base.send :extend, HairTrigger::Base
+
+      if ActiveRecord::VERSION::STRING < "4.1."
+        ActiveRecord::Migrator.send :extend, HairTrigger::Migrator
+      else
+        ActiveRecord::Migration.send :include, HairTrigger::Migrator
+      end
+
+      ActiveRecord::ConnectionAdapters::AbstractAdapter.include HairTrigger::Migration::Statements
+      ActiveRecord::ConnectionAdapters::AbstractAdapter.include HairTrigger::Adapter
+      ActiveRecord::SchemaDumper.include HairTrigger::SchemaDumper
+    end
 
     def current_triggers
       # see what the models say there should be
@@ -217,11 +232,3 @@ end
   end
 end
 
-ActiveRecord::Base.send :extend, HairTrigger::Base
-if ActiveRecord::VERSION::STRING < "4.1."
-  ActiveRecord::Migrator.send :extend, HairTrigger::Migrator
-else
-  ActiveRecord::Migration.send :include, HairTrigger::Migrator
-end
-ActiveRecord::ConnectionAdapters::AbstractAdapter.include HairTrigger::Migration::Statements
-ActiveRecord::SchemaDumper.class_eval { include HairTrigger::SchemaDumper }
