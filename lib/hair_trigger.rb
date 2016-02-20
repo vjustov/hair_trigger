@@ -223,5 +223,5 @@ if ActiveRecord::VERSION::STRING < "4.1."
 else
   ActiveRecord::Migration.send :include, HairTrigger::Migrator
 end
-ActiveRecord::ConnectionAdapters::AbstractAdapter.class_eval { include HairTrigger::Adapter }
+ActiveRecord::ConnectionAdapters::AbstractAdapter.include HairTrigger::Migration::Statements
 ActiveRecord::SchemaDumper.class_eval { include HairTrigger::SchemaDumper }

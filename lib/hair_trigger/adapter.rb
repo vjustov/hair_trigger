@@ -1,16 +1,5 @@
 module HairTrigger
   module Adapter
-    def create_trigger(name = nil, options = {})
-      if name.is_a?(Hash)
-        options = name
-        name = nil
-      end
-      ::HairTrigger::Builder.new(name, options.merge(:execute => true, :adapter => self))
-    end
-
-    def drop_trigger(name, table, options = {})
-      ::HairTrigger::Builder.new(name, options.merge(:execute => true, :drop => true, :table => table, :adapter => self)).all{}
-    end
 
     def normalize_mysql_definer(definer)
       user, host = definer.split('@')
@@ -26,6 +15,7 @@ module HairTrigger
       triggers = {}
       name_clause = options[:only] ? "IN ('" + options[:only].join("', '") + "')" : nil
       adapter_name = HairTrigger.adapter_name_for(self)
+
       case adapter_name
         when :sqlite
           select_rows("SELECT name, sql FROM sqlite_master WHERE type = 'trigger' #{name_clause ? " AND name " + name_clause : ""}").each do |(name, definition)|
@@ -59,7 +49,7 @@ FOR EACH ROW
             WHERE NOT tgisinternal AND tgconstrrelid = 0 AND tgrelid IN (
               SELECT oid FROM pg_class WHERE relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
             )
-            
+
             #{name_clause ? " AND tgname::varchar " + name_clause : ""}
             UNION
             SELECT proname || '()', pg_get_functiondef(oid)
