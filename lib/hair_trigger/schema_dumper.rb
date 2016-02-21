@@ -53,6 +53,7 @@ module HairTrigger
         else
           stream.puts "  # no candidate create_trigger statement could be found, creating an adapter-specific one"
         end
+        definition = remove_schema_name_from(definition)
         if definition =~ /\n/
           stream.print "  execute(<<-TRIGGERSQL)\n#{definition.rstrip}\n  TRIGGERSQL\n\n"
         else
@@ -61,6 +62,10 @@ module HairTrigger
       end
 
       migration_trigger_builders.each { |builder| stream.print builder.to_ruby('  ', false) + "\n\n" }
+    end
+
+    def remove_schema_name_from(definition)
+      definition.gsub('public.', '')
     end
 
     def normalize_trigger(name, definition, type)
